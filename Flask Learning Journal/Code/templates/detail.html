@@ -1,0 +1,42 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <div class="entry-list single">
+        <article>
+            <h1>{{ entry.title }}</h1>
+            <time datetime="{{ entry.created_at.strftime('%d %B %Y') }}">
+                {{ entry.created_at.strftime('%d %B %Y') }}
+            </time>
+            <div class="entry">
+                <h3>Time Spent: </h3>
+                <p>{{entry.time_spent}}</p>
+            </div>
+            <div class="entry">
+                <h3>What I Learned:</h3>
+                {% for par in entry.learned.split("\n") %}
+                    <p>{{ par }}</p>
+                {% endfor %}
+            </div>
+            <div class="entry">
+                <h3>Resources to Remember:</h3>
+                <ul>
+                    {% for par in entry.to_remember.split("\n") %}
+                    <li>{{ par }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="entry">
+                <h3>Tags:</h3>
+                    <p>
+                        {% for tag in entry.tags.split() %}
+                            <a href="{{ url_for('tag', tag=tag) }}">{{ tag }}</a>
+                        {% endfor %}
+                    </p>
+            </div>
+        </article>
+    </div>
+    <div class="edit">
+        <p><a href="{{ url_for('edit', slug=entry.slug) }}">Edit Entry</a></p>
+        <p><a href="{{ url_for('delete', slug=entry.slug) }}">Delete Entry</a></p>
+    </div>
+{% endblock %}

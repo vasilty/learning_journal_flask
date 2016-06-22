@@ -1,0 +1,15 @@
+{% macro render_field(field) %}
+        {% if field.errors %}
+            {% for error in field.errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        {% endif %}
+        {% if field.widget.input_type != 'hidden' %}
+            {{ field.label }}
+            {% if field.name == 'tags' %}
+                {{ field(placeholder='eg. tag1 tag2') }}
+            {% else %}
+                {{ field() }}
+            {% endif %}
+        {% endif %}
+{% endmacro %}

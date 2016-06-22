@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <div class="entry-list">
+        {% for entry in stream %}
+            <article>
+                <h2><a href="{{ url_for('detail', slug=entry.slug) }}">{{ entry.title }}</a></h2>
+                <time datetime="{{ entry.created_at.strftime('%d %B %Y') }}">
+                    {{ entry.created_at.strftime('%d %B %Y') }}
+                </time>
+                at
+                <time datetime="{{ entry.created_at.strftime('%H:%M') }}">
+                    {{ entry.created_at.strftime('%H:%M') }}
+                </time>
+                {% if entry.tags %}
+                        {% for tag in entry.tags.split() %}
+                            <a class="tag-list" href="{{ url_for('tag', tag=tag) }}">{{ tag }}</a>
+                        {% endfor %}
+                {% endif %}
+            </article>
+        {% endfor %}
+    </div>
+{% endblock %}
