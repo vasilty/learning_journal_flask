@@ -28,8 +28,8 @@
             <div class="entry">
                 <h3>Tags:</h3>
                     <p>
-                        {% for tag in entry.tags.split() %}
-                            <a href="{{ url_for('tag', tag=tag) }}">{{ tag }}</a>
+                        {% for tag in entry.get_tags() %}
+                            <a href="{{ url_for('tag', tag=tag.name) }}">{{ tag.name }}</a>
                         {% endfor %}
                     </p>
             </div>

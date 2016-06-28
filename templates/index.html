@@ -9,17 +9,15 @@
                     <time datetime="{{ entry.created_at.strftime('%d %B %Y') }}">
                         {{ entry.created_at.strftime('%d %B %Y') }}
                     </time>
-                    {% if entry.tags %}
-                            {% for tag in entry.tags.split() %}
-                                <a class="tag-list" href="{{ url_for('tag', tag=tag) }}">{{ tag }}</a>
-                            {% endfor %}
-                    {% endif %}
+                    {% for tag in entry.get_tags() %}
+                        <a href="{{ url_for('tag', tag=tag.name) }}">{{ tag.name }}</a>
+                    {% endfor %}
                 </article>
             {% endfor %}
         {% else %}
-                <article>
-                    <h2><a>There are no entries yet!</a></h2>
-                </article>
+            <article>
+                <h2><a>There are no entries yet!</a></h2>
+            </article>
         {% endif %}
     </div>
 {% endblock %}

@@ -4,7 +4,7 @@ from flask import (Flask, render_template, url_for, redirect, g, request,
 from flask.ext.bcrypt import check_password_hash
 from flask.ext.login import (LoginManager, login_user, logout_user,
                              login_required)
-from slugify import slugify
+
 import forms
 import models
 
@@ -68,12 +68,11 @@ def logout():
 
 @app.route('/tags/<tag>')
 def tag(tag):
-    stream = []
-    for entry in models.Entry.select():
-        if tag in entry.tags:
-            stream.append(entry)
+    """Shows a list of entries with a specific tag."""
+    tag = models.Tag.get(models.Tag.name == tag)
+    stream = tag.get_entries().limit(100)
     if stream:
-        return render_template('tag.html', stream=stream)
+        return render_template('index.html', stream=stream)
     else:
         abort(404)
 
@@ -81,7 +80,7 @@ def tag(tag):
 @app.route('/')
 @app.route('/entries')
 def index():
-    """Shows a home page."""
+    """Shows a list of recent entries."""
     stream = models.Entry.select().limit(100)
     return render_template('index.html', stream=stream)
 
@@ -90,19 +89,33 @@ def index():
 @login_required
 def new():
     """Creates a new entry."""
-    form = forms.EntryForm(entry_id=-1)
-    # Autofill form field with the today's date.
+    form = forms.EntryForm()
     if request.method == 'GET':
-        form.date.data = datetime.datetime.now()
+        # Fill form field with today's date.
+        form.created_at.data = datetime.datetime.now()
     elif request.method == 'POST':
+        form = forms.EntryForm()
         if form.validate_on_submit():
-            models.Entry.create(
+            # Create a new entry.
+            entry = models.Entry.create(
                 title=form.title.data.strip(),
                 learned=form.learned.data.strip(),
                 to_remember=form.to_remember.data.strip(),
                 time_spent=form.time_spent.data.strip(),
-                tags=form.tags.data.strip()
+                created_at=form.created_at.data
             )
+
+            # For each input tag
+            for tag_name in form.tags.data:
+                # Check that tag with that name exists.
+                try:
+                    tag = models.Tag.get(models.Tag.name == tag_name)
+                # If not, create the tag.
+                except models.Tag.DoesNotExist:
+                    tag = models.Tag.create(name=tag_name)
+                # Link tag to the entry.
+                models.EntryTag.create(tag=tag, entry=entry)
+
             return redirect(url_for('index'))
     return render_template('new.html', form=form)
 
@@ -116,7 +129,6 @@ def detail(slug):
     except models.DoesNotExist:
         abort(404)
     else:
-
         return render_template('detail.html', entry=entry)
 
 
@@ -124,32 +136,58 @@ def detail(slug):
 @login_required
 def edit(slug):
     """Edits an entry."""
+
+    # Check that entry with that slug exists.
     try:
         entry = models.Entry.get(models.Entry.slug == slug)
     except models.DoesNotExist:
         abort(404)
     else:
-        form = forms.EntryForm(entry_id=entry.id)
+        entry_tags = entry.get_tags()
+        existing_tag_names = [tag.name for tag in entry_tags]
         if request.method == 'GET':
-            # Populate the form field with current entry data.
-            form.title.data = entry.title
-            form.time_spent.data = entry.time_spent
-            form.learned.data = entry.learned
-            form.to_remember.data = entry.to_remember
-            form.date.data = entry.created_at
-            form.tags.data = entry.tags
-        elif request.method == 'POST':
+            # Populate the form with the entry data.
+            form = forms.EntryForm(obj=entry)
+            form.tags.data = existing_tag_names
+        if request.method == 'POST':
+            form = forms.EntryForm()
             if form.validate_on_submit():
-                query = models.Entry.update(
-                    title=form.title.data.strip(),
-                    learned=form.learned.data.strip(),
-                    to_remember=form.to_remember.data.strip(),
-                    time_spent=form.time_spent.data.strip(),
-                    created_at=form.date.data,
-                    tags=form.tags.data.strip(),
-                    slug=slugify(form.title.data.strip())
-                ).where(models.Entry.slug == slug)
+                # Delete all previously existing tags of the entry.
+                query = models.EntryTag.delete().where(
+                    models.EntryTag.entry == entry)
                 query.execute()
+
+                # Update the entry.
+                entry.title = form.title.data.strip()
+                entry.learned = form.learned.data.strip()
+                entry.to_remember = form.to_remember.data.strip()
+                entry.time_spent = form.time_spent.data.strip()
+                entry.created_at = form.created_at.data
+                entry.save()
+
+                # For each input tag
+                for tag_name in form.tags.data:
+                    # Check that tag with that name exists.
+                    try:
+                        tag = models.Tag.get(models.Tag.name == tag_name)
+                    # If not, create the tag.
+                    except models.Tag.DoesNotExist:
+                        tag = models.Tag.create(name=tag_name)
+                    # Link tag to the entry.
+                    models.EntryTag.create(tag=tag, entry=entry)
+
+                # For each previously existing tag
+                for existing_tag in entry_tags:
+                    # Check that the tag is present in any entry.
+                    try:
+                        models.EntryTag.get(
+                            models.EntryTag.tag == existing_tag)
+                    # If this tag is not present, delete the tag.
+                    except models.EntryTag.DoesNotExist:
+                        tag = models.Tag.get(
+                            models.Tag.name == existing_tag.name)
+                        tag.delete_instance()
+
                 return redirect(url_for('index'))
         return render_template('edit.html', form=form)
 
