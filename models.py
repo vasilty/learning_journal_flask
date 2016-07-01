@@ -41,7 +41,7 @@ class Entry(Model):
         slug = slugify(self.title)
         # Ensures uniqueness of slug by appending -1, -2, -3 etc if necessary.
         count = Entry.select().where(Entry.slug == slug).count()
-        if count:
+        if count > 1:
             slug += '-' + str(count)
         self.slug = slug
         super(Entry, self).save(*args, **kwargs)
@@ -58,6 +58,7 @@ class Entry(Model):
 
 class Tag(Model):
     name = CharField(max_length=100)
+#    deleted = BooleanField(default=False)
 
     def get_entries(self):
         """Returns all entries with the current tag."""
@@ -71,8 +72,8 @@ class Tag(Model):
 
 
 class EntryTag(Model):
-    entry = ForeignKeyField(Entry)
-    tag = ForeignKeyField(Tag)
+    entry = ForeignKeyField(rel_model=Entry, on_delete='CASCADE')
+    tag = ForeignKeyField(rel_model=Tag, on_delete='CASCADE')
 
     class Meta:
         database = DATABASE

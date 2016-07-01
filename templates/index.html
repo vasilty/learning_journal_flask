@@ -6,9 +6,7 @@
             {% for entry in stream %}
                 <article>
                     <h2><a href="{{ url_for('detail', slug=entry.slug) }}">{{ entry.title }}</a></h2>
-                    <time datetime="{{ entry.created_at.strftime('%d %B %Y') }}">
-                        {{ entry.created_at.strftime('%d %B %Y') }}
-                    </time>
+                    <time datetime="{{ entry.created_at.strftime('%d %B %Y') }}">{{ entry.created_at.strftime('%d %B %Y') }}</time>
                     {% for tag in entry.get_tags() %}
                         <a href="{{ url_for('tag', tag=tag.name) }}">{{ tag.name }}</a>
                     {% endfor %}
