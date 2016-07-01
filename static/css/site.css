@@ -148,6 +148,11 @@ ul li a {
    Page Styles
    ========================================================================== */
 
+.tag {
+    text-decoration: none;
+    color: #404a49;
+}
+
 .entry-list,
 .edit-entry,
 .new-entry {
@@ -174,10 +179,6 @@ ul li a {
 }
 .entry-list.single time {
 	font-size: 18px;
-}
-.tag-list {
-	font-size: 18px;
-	color: #404a49;
 }
 .entry {
 	max-width: 800px;
