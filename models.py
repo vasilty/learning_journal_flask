@@ -58,7 +58,6 @@ class Entry(Model):
 
 class Tag(Model):
     name = CharField(max_length=100)
-#    deleted = BooleanField(default=False)
 
     def get_entries(self):
         """Returns all entries with the current tag."""

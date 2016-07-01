@@ -5,6 +5,7 @@ from wtforms.validators import DataRequired, Length
 
 
 class TagField(StringField):
+    """Custom form field for entry tags."""
     def _value(self):
         if self.data:
             return ' '.join(self.data)
@@ -46,7 +47,6 @@ class EntryForm(Form):
     )
     created_at = DateField(
         'Date',
-#        validators=[DataRequired()]
     )
     time_spent = StringField(
         'Time Spent',

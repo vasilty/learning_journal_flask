@@ -8,7 +8,6 @@ from flask.ext.login import (LoginManager, login_user, logout_user,
 import forms
 import models
 
-from peewee import *
 
 DEBUG = True
 
@@ -85,11 +84,6 @@ def tag(tag):
 def index():
     """Shows a list of recent entries."""
     stream = models.Entry.select().limit(100)
-
-    for tag in models.Tag.select():
-        print(tag)
-    for tag in models.EntryTag.select():
-        print(tag)
     return render_template('index.html', stream=stream)
 
 
@@ -116,11 +110,9 @@ def new():
             # For each input tag
             for tag_name in form.tags.data:
                 # Check that tag with that name exists.
-                try:
-                    tag = models.Tag.get(models.Tag.name == tag_name)
                 # If not, create the tag.
-                except models.Tag.DoesNotExist:
-                    tag = models.Tag.create(name=tag_name)
+                tag, created = models.Tag.get_or_create(name=tag_name)
+
                 # Link tag to the entry.
                 models.EntryTag.create(tag=tag, entry=entry)
 
@@ -153,7 +145,6 @@ def edit(slug):
     else:
         old_tags = entry.get_tags()
         old_tag_names = [tag.name for tag in old_tags]
-        # print(existing_tag_names)
         if request.method == 'GET':
             # Populate the form with the entry data.
             form = forms.EntryForm(obj=entry)
@@ -210,14 +201,6 @@ def delete(slug):
         abort(404)
     else:
         entry_tags = entry.get_tags()
-        # for tag in entry_tags:
-        #     print(tag)
-        # print(entry_tags.count())
-
-        # Delete the links between tags and current entry.
-        # query = models.EntryTag.delete().where(
-        #     models.EntryTag.entry == entry)
-        # query.execute()
 
         # For each previously existing tag
         for entry_tag in entry_tags:
@@ -227,19 +210,16 @@ def delete(slug):
             try:
                 models.EntryTag.get(
                     (models.EntryTag.tag == entry_tag) & (
-                    models.EntryTag.entry != entry)
+                     models.EntryTag.entry != entry)
                 )
             # If this tag is not linked, delete the tag.
             except models.EntryTag.DoesNotExist:
                 tag = models.Tag.get(
                     models.Tag.name == entry_tag.name)
                 tag.delete_instance()
-                # entry_tag.deleted = True
-                # entry_tag.save()
 
         # Delete entry and all its links.
         entry.delete_instance(recursive=True)
-
 
         return redirect(url_for('index'))
 
